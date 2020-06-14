@@ -12,6 +12,11 @@ proc splitByDelimiter(key: string): seq[string] =
 proc isRecursion(node: JsonNode): bool =
   return node.kind == JObject or node.kind == JArray
 
+proc camelize(key: string): string =
+  let parts = key.splitByDelimiter
+  let capitalizedParts = map(parts[1..parts.len - 1], capitalizeAscii)
+  return join(concat([parts[0..0], capitalizedParts]))
+
 proc camelize(node: JsonNode): JsonNode =
   var newNode: JsonNode
   if node.kind == JObject:
@@ -20,9 +25,7 @@ proc camelize(node: JsonNode): JsonNode =
       var newValue = value
       if value.isRecursion:
         newValue = value.camelize
-      let parts = key.splitByDelimiter
-      let capitalizedParts = map(parts[1..parts.len - 1], capitalizeAscii)
-      let newKey = join(concat([parts[0..0], capitalizedParts]))
+      let newKey = key.camelize
       newNode.add(newKey, newValue)
   elif node.kind == JArray:
     newNode = %*[]
@@ -35,6 +38,10 @@ proc camelize(node: JsonNode): JsonNode =
     newNode = node
   return newNode
 
+proc underscore(key: string): string =
+  let parts = key.splitByDelimiter.join.splitByUpperCharacter
+  return parts.join("_")
+
 proc underscore(node: JsonNode): JsonNode =
   var newNode: JsonNode
   if node.kind == JObject:
@@ -43,8 +50,7 @@ proc underscore(node: JsonNode): JsonNode =
       var newValue = value
       if value.isRecursion:
         newValue = value.underscore
-      let parts = key.splitByDelimiter.join.splitByUpperCharacter
-      let newKey = parts.join("_")
+      let newKey = key.underscore
       newNode.add(newKey, newValue)
   elif node.kind == JArray:
     newNode = %*[]
