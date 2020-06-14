@@ -1,7 +1,10 @@
-from strutils import join, capitalizeAscii
+from strutils import join, capitalizeAscii, toLowerAscii
 from sequtils import map, concat
 import json
-from re import re, split
+from re import re, split, findAll
+
+proc splitByUpperCharacter(key: string): seq[string] =
+  return key.findAll(re"(^[a-z][a-z]+|[A-Z][a-z]+)").map(toLowerAscii)
 
 proc splitByDelimiter(key: string): seq[string] =
   return split(key, re"(-|_|/|\s)")
@@ -32,4 +35,26 @@ proc camelize(node: JsonNode): JsonNode =
     newNode = node
   return newNode
 
-export camelize
+proc underscore(node: JsonNode): JsonNode =
+  var newNode: JsonNode
+  if node.kind == JObject:
+    newNode = %*{}
+    for key, value in node.pairs:
+      var newValue = value
+      if value.isRecursion:
+        newValue = value.underscore
+      let parts = key.splitByDelimiter.join.splitByUpperCharacter
+      let newKey = parts.join("_")
+      newNode.add(newKey, newValue)
+  elif node.kind == JArray:
+    newNode = %*[]
+    for element in node.getElems:
+      var newValue = element
+      if element.isRecursion:
+        newValue = element.underscore
+      newNode.add(newValue)
+  else:
+    newNode = node
+  return newNode
+
+export camelize, underscore

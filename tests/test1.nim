@@ -51,3 +51,8 @@ suite "snake -> camel":
   
   test "string node":
     check camelize(%*"string") == %*"string"
+
+suite "camel -> snake":
+  test "simple node":
+    check underscore(%*{"snakeCaseKey": "value"}) == %*{"snake_case_key": "value"}
+  
